@@ -1,3 +1,5 @@
+tmp/
+cmd/apptest
 # Binaries for programs and plugins
 *.exe
 *.exe~
