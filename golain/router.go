@@ -2,13 +2,7 @@ package golain
 
 import (
 	"context"
-	"embed"
-	"net"
 	"net/http"
-	"os"
-
-	"github.com/imdario/mergo"
-	"github.com/rs/zerolog/log"
 )
 
 // Ctx ...
@@ -105,85 +99,6 @@ func Get[T any](path string, handlers ...HandlerFunc) *Route {
 	}
 }
 
-// AppRouterOptions ...
-type AppRouterOptions struct {
-	ID            string
-	Host          string
-	Port          int
-	Banner        bool
-	RequestLogger bool
-}
-
-// AppRouter ...
-type AppRouter interface {
-	Use(fn func(r *AppRouter)) AppRouter
-	RegisterRoute(method, path string, fn []HandlerFunc) AppRouter
-	EnableTracing(url string) AppRouter
-	MountFrontend(data embed.FS) AppRouter
-	Run()
-}
-
-func mergeOptions(opts ...AppRouterOptions) *AppRouterOptions {
-	o := &AppRouterOptions{}
-
-	for _, opt := range opts {
-		_ = mergo.Merge(o, &opt, mergo.WithSliceDeepCopy)
-	}
-
-	return o
-}
-
-// WithAppRouter ...
-func WithAppRouter(r AppRouter) Option {
-	return func(g *Golain) error {
-		g.r = r
-
-		return nil
-	}
-}
-
-// Golain ...
-type Golain struct {
-	r AppRouter
-}
-
-// Option represents option function
-type Option func(g *Golain) error
-
-// New ...
-func New(opts ...Option) *Golain {
-	instance := &Golain{}
-
-	for _, opt := range opts {
-		if err := opt(instance); err != nil {
-			log.Err(err).Send()
-		}
-	}
-
-	return instance
-}
-
-// Register ...
-func (g *Golain) Register(fn func(g *Golain)) *Golain {
-	fn(g)
-
-	return g
-}
-
-// RegisterRoutes ...
-func (g *Golain) RegisterRoutes(routes ...*Route) *Golain {
-	for _, r := range routes {
-		g.r.RegisterRoute(r.method, r.path, r.handlers)
-	}
-
-	return g
-}
-
-// Run ...
-func (g *Golain) Run() {
-	g.r.Run()
-}
-
 // Params return path parameters from Ctx
 func Params[P any](c *Ctx) P {
 	var p P
@@ -210,20 +125,4 @@ func Headers[H any](c *Ctx) H {
 	var h H
 
 	return h
-}
-
-// Addresses returns addresses the server can bind to
-func addresses() []string {
-	host, _ := os.Hostname()
-	addresses, _ := net.LookupIP(host)
-
-	var hosts []string
-
-	for _, addr := range addresses {
-		if ipv4 := addr.To4(); ipv4 != nil {
-			hosts = append(hosts, ipv4.String())
-		}
-	}
-
-	return hosts
 }
