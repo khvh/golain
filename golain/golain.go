@@ -4,6 +4,7 @@ import (
 	"net"
 	"os"
 
+	"github.com/khvh/golain/queue"
 	"github.com/rs/zerolog/log"
 )
 
@@ -54,6 +55,13 @@ func (g *Golain) EnableMetrics() *Golain {
 // EnableTracing ...
 func (g *Golain) EnableTracing(url ...string) *Golain {
 	g.r.WithTracing(url...)
+	return g
+}
+
+// EnableQueue ...
+func (g *Golain) EnableQueue(url, pw string, opts queue.Queues, fn func(q *queue.Queue)) *Golain {
+	g.r.WithQueue(url, pw, opts, fn)
+
 	return g
 }
 

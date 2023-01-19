@@ -7,12 +7,14 @@ import (
 	"strings"
 
 	"github.com/ansrivas/fiberprometheus/v2"
+	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/contrib/otelfiber"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
+	"github.com/khvh/golain/queue"
 	"github.com/khvh/golain/telemetry"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
@@ -92,6 +94,23 @@ func (f *FiberRouter) WithTracing(url ...string) AppRouter {
 
 // WithFrontend ...
 func (f *FiberRouter) WithFrontend(data embed.FS) AppRouter {
+	return f
+}
+
+// WithQueue ...
+func (f *FiberRouter) WithQueue(url, pw string, opts queue.Queues, fn func(q *queue.Queue)) AppRouter {
+	q, mon := queue.
+		CreateServer(url, 11, opts).
+		MountMonitor(url, pw)
+
+	f.app.All("/monitoring/tasks/*", adaptor.HTTPHandler(mon))
+
+	fn(q)
+
+	q.Run()
+
+	log.Trace().Msgf("Asynq running on http://0.0.0.0:%d/monitoring/tasks", f.opts.Port)
+
 	return f
 }
 

@@ -4,6 +4,7 @@ import (
 	"embed"
 
 	"github.com/imdario/mergo"
+	"github.com/khvh/golain/queue"
 )
 
 // AppRouterOptions ...
@@ -23,6 +24,7 @@ type AppRouter interface {
 	WithTracing(url ...string) AppRouter
 	WithMetrics() AppRouter
 	WithFrontend(data embed.FS) AppRouter
+	WithQueue(url, pw string, opts queue.Queues, fn func(q *queue.Queue)) AppRouter
 	Run()
 }
 

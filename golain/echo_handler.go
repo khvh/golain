@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/khvh/golain/queue"
 	"github.com/khvh/golain/telemetry"
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
@@ -131,6 +132,23 @@ func (f *EchoRouter) WithTracing(url ...string) AppRouter {
 
 // WithFrontend ...
 func (f *EchoRouter) WithFrontend(data embed.FS) AppRouter {
+	return f
+}
+
+// WithQueue ...
+func (f *EchoRouter) WithQueue(url, pw string, opts queue.Queues, fn func(q *queue.Queue)) AppRouter {
+	q, mon := queue.
+		CreateServer(url, 11, opts).
+		MountMonitor("127.0.0.1:6379", "")
+
+	f.app.Any("/monitoring/tasks/*", echo.WrapHandler(mon))
+
+	fn(q)
+
+	q.Run()
+
+	log.Trace().Msgf("Asynq running on http://0.0.0.0:%d/monitoring/tasks", f.opts.Port)
+
 	return f
 }
 
