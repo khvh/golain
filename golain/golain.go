@@ -65,6 +65,13 @@ func (g *Golain) EnableQueue(url, pw string, opts queue.Queues, fn func(q *queue
 	return g
 }
 
+// WithDefaultMiddleware ...
+func (g *Golain) WithDefaultMiddleware() *Golain {
+	g.r.WithDefaultMiddleware()
+
+	return g
+}
+
 // Run ...
 func (g *Golain) Run() {
 	g.r.Run()
@@ -75,7 +82,10 @@ func addresses() []string {
 	host, _ := os.Hostname()
 	addresses, _ := net.LookupIP(host)
 
-	var hosts []string
+	hosts := []string{
+		"127.0.0.1",
+		"0.0.0.0",
+	}
 
 	for _, addr := range addresses {
 		if ipv4 := addr.To4(); ipv4 != nil {

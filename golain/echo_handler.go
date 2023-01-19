@@ -12,19 +12,23 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog/log"
+	"github.com/swaggest/openapi-go/openapi3"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 	"go.opentelemetry.io/otel"
 )
 
 // EchoRouter ...
 type EchoRouter struct {
-	app  *echo.Echo
-	opts *AppRouterOptions
+	app    *echo.Echo
+	opts   *AppRouterOptions
+	ref    *openapi3.Reflector
+	router *Router
 }
 
 func newEchoRouter(opts *AppRouterOptions) AppRouter {
 	r := &EchoRouter{
-		app: echo.New(),
+		app:    echo.New(),
+		router: NewRouter(),
 	}
 
 	r.app.HideBanner = opts.Banner
@@ -181,13 +185,6 @@ func (f *EchoRouter) WithRoute(method, path string, fn []HandlerFunc) AppRouter 
 
 // Run ...
 func (f *EchoRouter) Run() {
-	log.
-		Info().
-		Str("id", f.opts.ID).
-		Str("URL", fmt.Sprintf("http://0.0.0.0:%d", f.opts.Port)).
-		Str("OpenAPI", fmt.Sprintf("http://0.0.0.0:%d/docs", f.opts.Port)).
-		Send()
-
 	for _, host := range addresses() {
 		log.
 			Info().

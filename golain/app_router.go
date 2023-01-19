@@ -10,6 +10,7 @@ import (
 // AppRouterOptions ...
 type AppRouterOptions struct {
 	ID            string
+	Version       string
 	Host          string
 	Port          int
 	Banner        bool

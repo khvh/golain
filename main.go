@@ -3,9 +3,11 @@ package main
 import (
 	"sync"
 
+	"github.com/khvh/golain/api"
 	"github.com/khvh/golain/golain"
 	"github.com/khvh/golain/logger"
 	"github.com/khvh/golain/queue"
+	"github.com/rs/zerolog/log"
 )
 
 // TestType ...
@@ -19,6 +21,23 @@ func t1(c *golain.Ctx) *golain.Res {
 
 func main() {
 	logger.Init(true)
+
+	g := api.Group{
+		Name: "Projects",
+		Routes: []api.Route{
+			{
+				ID:     "listProjects",
+				Path:   "",
+				Desc:   "List priojects",
+				Params: []api.Param{{Key: "q"}},
+				Res: map[api.Status]any{
+					api.StatusOK: []TestType{},
+				},
+			},
+		},
+	}
+
+	log.Info().Interface("api", g).Send()
 
 	wg := new(sync.WaitGroup)
 
@@ -48,6 +67,7 @@ func main() {
 	go func() {
 		golain.
 			New(golain.WithEcho(7777, golain.AppRouterOptions{Banner: true, ID: "ech"})).
+			WithDefaultMiddleware().
 			EnableMetrics().
 			EnableTracing().
 			EnableQueue("127.0.0.1:6379", "", queue.Queues{
