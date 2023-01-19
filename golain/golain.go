@@ -38,9 +38,22 @@ func (g *Golain) Register(fn func(g *Golain)) *Golain {
 // RegisterRoutes ...
 func (g *Golain) RegisterRoutes(routes ...*Route) *Golain {
 	for _, r := range routes {
-		g.r.RegisterRoute(r.method, r.path, r.handlers)
+		g.r.WithRoute(r.method, r.path, r.handlers)
 	}
 
+	return g
+}
+
+// EnableMetrics ...
+func (g *Golain) EnableMetrics() *Golain {
+	g.r.WithMetrics()
+
+	return g
+}
+
+// EnableTracing ...
+func (g *Golain) EnableTracing(url ...string) *Golain {
+	g.r.WithTracing(url...)
 	return g
 }
 

@@ -4,9 +4,14 @@ import (
 	"embed"
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/khvh/golain/telemetry"
+	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 )
 
 // EchoRouter ...
@@ -76,18 +81,65 @@ func (f *EchoRouter) Use(fn func(r *AppRouter)) AppRouter {
 	return f
 }
 
-// EnableTracing ...
-func (f *EchoRouter) EnableTracing(url string) AppRouter {
+// WithDefaultMiddleware ...
+func (f *EchoRouter) WithDefaultMiddleware() AppRouter {
+	f.app.Use(middleware.RequestID())
+	f.app.Use(middleware.CORS())
+	f.app.Use(middleware.Recover())
+
 	return f
 }
 
-// MountFrontend ...
-func (f *EchoRouter) MountFrontend(data embed.FS) AppRouter {
+// WithRequestLogger ...
+func (f *EchoRouter) WithRequestLogger() AppRouter {
+	f.app.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogURI:    true,
+		LogStatus: true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			log.Trace().
+				Str("method", c.Request().Method).
+				Int("code", v.Status).
+				Str("uri", v.URI).
+				Str("from", c.Request().RemoteAddr).
+				Send()
+
+			return nil
+		},
+	}))
+
 	return f
 }
 
-// RegisterRoute ...
-func (f *EchoRouter) RegisterRoute(method, path string, fn []HandlerFunc) AppRouter {
+// WithTracing ...
+func (f *EchoRouter) WithTracing(url ...string) AppRouter {
+	id := strings.ReplaceAll(f.opts.ID, "-", "_")
+	u := "http://localhost:14268/api/traces"
+
+	if len(url) > 0 {
+		u = url[0]
+	}
+
+	telemetry.New(id, u)
+
+	f.app.Use(otelecho.Middleware(id))
+
+	return f
+}
+
+// WithFrontend ...
+func (f *EchoRouter) WithFrontend(data embed.FS) AppRouter {
+	return f
+}
+
+// WithMetrics ...
+func (f *EchoRouter) WithMetrics() AppRouter {
+	prometheus.NewPrometheus(f.opts.ID, nil).Use(f.app)
+
+	return f
+}
+
+// WithRoute ...
+func (f *EchoRouter) WithRoute(method, path string, fn []HandlerFunc) AppRouter {
 	handlers := []echo.MiddlewareFunc{}
 
 	for i, h := range fn {

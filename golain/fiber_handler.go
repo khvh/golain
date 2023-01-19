@@ -4,8 +4,16 @@ import (
 	"embed"
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/ansrivas/fiberprometheus/v2"
+	"github.com/gofiber/contrib/otelfiber"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/monitor"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
+	"github.com/khvh/golain/telemetry"
 	"github.com/rs/zerolog/log"
 )
 
@@ -48,18 +56,56 @@ func (f *FiberRouter) Use(fn func(r *AppRouter)) AppRouter {
 	return f
 }
 
-// EnableTracing ...
-func (f *FiberRouter) EnableTracing(url string) AppRouter {
+// WithDefaultMiddleware ...
+func (f *FiberRouter) WithDefaultMiddleware() AppRouter {
+	f.app.Use(requestid.New())
+	f.app.Use(recover.New())
+	f.app.Use(cors.New())
+	f.app.Get("/monitor", monitor.New(monitor.Config{Title: f.opts.ID}))
+
 	return f
 }
 
-// MountFrontend ...
-func (f *FiberRouter) MountFrontend(data embed.FS) AppRouter {
+// WithRequestLogger ...
+func (f *FiberRouter) WithRequestLogger() AppRouter {
 	return f
 }
 
-// RegisterRoute ...
-func (f *FiberRouter) RegisterRoute(method, path string, fn []HandlerFunc) AppRouter {
+// WithTracing ...
+func (f *FiberRouter) WithTracing(url ...string) AppRouter {
+	id := strings.ReplaceAll(f.opts.ID, "-", "_")
+	u := "http://localhost:14268/api/traces"
+
+	if len(url) > 0 {
+		u = url[0]
+	}
+
+	telemetry.New(id, u)
+
+	f.app.Use(otelfiber.Middleware(otelfiber.WithServerName(f.opts.ID)))
+
+	return f
+}
+
+// WithFrontend ...
+func (f *FiberRouter) WithFrontend(data embed.FS) AppRouter {
+	return f
+}
+
+// WithMetrics ...
+func (f *FiberRouter) WithMetrics() AppRouter {
+	id := strings.ReplaceAll(f.opts.ID, "-", "_")
+	prometheus := fiberprometheus.New(id)
+
+	prometheus.RegisterAt(f.app, "/metrics")
+
+	f.app.Use(prometheus.Middleware)
+
+	return f
+}
+
+// WithRoute ...
+func (f *FiberRouter) WithRoute(method, path string, fn []HandlerFunc) AppRouter {
 	handlers := []fiber.Handler{}
 
 	for _, h := range fn {

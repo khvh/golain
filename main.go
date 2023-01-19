@@ -25,7 +25,11 @@ func main() {
 
 	go func() {
 		golain.
-			New(golain.WithFiber(6666, golain.AppRouterOptions{Banner: true, ID: "fib"})).
+			New(
+				golain.WithFiber(6666, golain.AppRouterOptions{Banner: true, ID: "fib"}),
+			).
+			EnableMetrics().
+			EnableTracing().
 			Register(func(g *golain.Golain) {
 				g.RegisterRoutes(
 					golain.Get[TestType]("/test-path", t1),
@@ -38,6 +42,8 @@ func main() {
 	go func() {
 		golain.
 			New(golain.WithEcho(7777, golain.AppRouterOptions{Banner: true, ID: "ech"})).
+			EnableMetrics().
+			EnableTracing().
 			Register(func(g *golain.Golain) {
 				g.RegisterRoutes(
 					golain.Get[TestType]("/test-path", t1),

@@ -18,9 +18,11 @@ type AppRouterOptions struct {
 // AppRouter ...
 type AppRouter interface {
 	Use(fn func(r *AppRouter)) AppRouter
-	RegisterRoute(method, path string, fn []HandlerFunc) AppRouter
-	EnableTracing(url string) AppRouter
-	MountFrontend(data embed.FS) AppRouter
+	WithDefaultMiddleware() AppRouter
+	WithRoute(method, path string, fn []HandlerFunc) AppRouter
+	WithTracing(url ...string) AppRouter
+	WithMetrics() AppRouter
+	WithFrontend(data embed.FS) AppRouter
 	Run()
 }
 
