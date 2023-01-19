@@ -1,6 +1,7 @@
 package golain
 
 import (
+	"embed"
 	"fmt"
 	"net/http"
 
@@ -70,8 +71,23 @@ func mapGolainHandlerToEchoHandler(handler HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-// UseRoute ...
-func (f *EchoRouter) UseRoute(method, path string, fn []HandlerFunc) AppRouter {
+// Use ...
+func (f *EchoRouter) Use(fn func(r *AppRouter)) AppRouter {
+	return f
+}
+
+// EnableTracing ...
+func (f *EchoRouter) EnableTracing(url string) AppRouter {
+	return f
+}
+
+// MountFrontend ...
+func (f *EchoRouter) MountFrontend(data embed.FS) AppRouter {
+	return f
+}
+
+// RegisterRoute ...
+func (f *EchoRouter) RegisterRoute(method, path string, fn []HandlerFunc) AppRouter {
 	handlers := []echo.MiddlewareFunc{}
 
 	for i, h := range fn {

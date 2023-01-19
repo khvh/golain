@@ -1,6 +1,7 @@
 package golain
 
 import (
+	"embed"
 	"fmt"
 	"net/http"
 
@@ -42,8 +43,23 @@ func mapGolainHandlerToFiber(handler HandlerFunc) fiber.Handler {
 	}
 }
 
-// UseRoute ...
-func (f *FiberRouter) UseRoute(method, path string, fn []HandlerFunc) AppRouter {
+// Use ...
+func (f *FiberRouter) Use(fn func(r *AppRouter)) AppRouter {
+	return f
+}
+
+// EnableTracing ...
+func (f *FiberRouter) EnableTracing(url string) AppRouter {
+	return f
+}
+
+// MountFrontend ...
+func (f *FiberRouter) MountFrontend(data embed.FS) AppRouter {
+	return f
+}
+
+// RegisterRoute ...
+func (f *FiberRouter) RegisterRoute(method, path string, fn []HandlerFunc) AppRouter {
 	handlers := []fiber.Handler{}
 
 	for _, h := range fn {

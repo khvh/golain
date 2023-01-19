@@ -2,6 +2,7 @@ package golain
 
 import (
 	"context"
+	"embed"
 	"net"
 	"net/http"
 	"os"
@@ -115,7 +116,10 @@ type AppRouterOptions struct {
 
 // AppRouter ...
 type AppRouter interface {
-	UseRoute(method, path string, fn []HandlerFunc) AppRouter
+	Use(fn func(r *AppRouter)) AppRouter
+	RegisterRoute(method, path string, fn []HandlerFunc) AppRouter
+	EnableTracing(url string) AppRouter
+	MountFrontend(data embed.FS) AppRouter
 	Run()
 }
 
@@ -169,7 +173,7 @@ func (g *Golain) Register(fn func(g *Golain)) *Golain {
 // RegisterRoutes ...
 func (g *Golain) RegisterRoutes(routes ...*Route) *Golain {
 	for _, r := range routes {
-		g.r.UseRoute(r.method, r.path, r.handlers)
+		g.r.RegisterRoute(r.method, r.path, r.handlers)
 	}
 
 	return g
