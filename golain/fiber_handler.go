@@ -15,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/khvh/golain/telemetry"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
 )
 
 // FiberRouter ...
@@ -75,6 +76,8 @@ func (f *FiberRouter) WithRequestLogger() AppRouter {
 func (f *FiberRouter) WithTracing(url ...string) AppRouter {
 	id := strings.ReplaceAll(f.opts.ID, "-", "_")
 	u := "http://localhost:14268/api/traces"
+
+	otel.Tracer(id)
 
 	if len(url) > 0 {
 		u = url[0]

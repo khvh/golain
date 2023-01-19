@@ -12,6 +12,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
+	"go.opentelemetry.io/otel"
 )
 
 // EchoRouter ...
@@ -114,6 +115,8 @@ func (f *EchoRouter) WithRequestLogger() AppRouter {
 func (f *EchoRouter) WithTracing(url ...string) AppRouter {
 	id := strings.ReplaceAll(f.opts.ID, "-", "_")
 	u := "http://localhost:14268/api/traces"
+
+	otel.Tracer(id)
 
 	if len(url) > 0 {
 		u = url[0]
